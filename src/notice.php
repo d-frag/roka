@@ -15,17 +15,28 @@ if (! empty($_POST)) {
     ORM::configure('sqlite:./d-frag.db');
     $reports = ORM::for_table('reports')->select('reports.*')->find_many();
 
-    $text     = '';
     $datetime = new DateTimeImmutable();
     $current  = $datetime->format('Y-m-d H:i:s');
 
+    $text = '';
+    if ($slackText = getenv('SLACK_TEXT')) {
+        $text .= $slackText;
+        $text .= "\n";
+        $text .= '----- cut -----';
+        $text .= "\n";
+    }
+
     foreach ($reports as $report) {
         if (900 < strtotime($current) - strtotime($report['datetime'])) {
-            $text .= $report['name'] . 'さんが日報を作成したらしいです。';
+            $text .= '[Name]';
+            $text .= "\n";
+            $text .= $report['name'];
+            $text .= "\n\n";
+            $text .= '[Content]';
             $text .= "\n";
             $text .= $report['content'];
             $text .= "\n";
-            $text .= '---------- cut ----------';
+            $text .= '----- cut -----';
             $text .= "\n";
 
             ORM::for_table('reports')->where_equal('id', $report['id'])->delete_many();
