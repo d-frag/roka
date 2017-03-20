@@ -1,0 +1,6 @@
+{
+  "require": {
+    "j4mie/idiorm": "^1.0.0",
+    "maknz/slack" : "^1.0.0"
+  }
+}
