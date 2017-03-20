@@ -11,41 +11,41 @@ if (! empty($_POST)) {
     $datetime = new DateTimeImmutable();
     $current  = $datetime->format('Y-m-d H:i:s');
 
-    $text = '';
-    if ($slackText = getenv('SLACK_TEXT')) {
-        $text .= $slackText;
-        $text .= "\n";
-        $text .= '----- cut -----';
-        $text .= "\n";
-    }
-
-    $isNotice = false;
+    $data = [];
     foreach ($reports as $report) {
         if (900 < strtotime($current) - strtotime($report['datetime'])) {
-            $isNotice = true;
-
-            $text .= '[Name]';
-            $text .= "\n";
-            $text .= $report['name'];
-            $text .= "\n\n";
-            $text .= '[Content]';
-            $text .= "\n";
-            $text .= $report['content'];
-            $text .= "\n";
-            $text .= '----- cut -----';
-            $text .= "\n";
+            array_push($data, [
+                'name'    => $report['name'],
+                'content' => $report['content'],
+            ]);
 
             ORM::for_table('reports')->where_equal('id', $report['id'])->delete_many();
         }
     }
 
-    if ($isNotice) {
+    if (! empty($data)) {
         $client = new Maknz\Slack\Client(getenv('SLACK_WEBHOOK_URL'), [
             'username'   => getenv('SLACK_USERNAME'),
             'channel'    => getenv('SLACK_CHANNEL'),
             'icon'       => getenv('SLACK_ICON'),
             'link_names' => true
         ]);
+
+        foreach ($data as $datum) {
+            $client = $client->attach([
+                'color'       => 'good',
+                'fallback'    => $datum['content'],
+                'text'        => $datum['content'],
+                'author_name' => $datum['name'],
+                'author_link' => getenv('SLACK_ICON'),
+                'author_icon' => getenv('SLACK_ICON'),
+            ]);
+        }
+
+        $text = '';
+        if ($slackText = getenv('SLACK_TEXT')) {
+            $text .= $slackText;
+        }
 
         $client->send($text);
     }
