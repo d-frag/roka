@@ -5,14 +5,16 @@ require __DIR__ . '/vendor/autoload.php';
 date_default_timezone_set('Asia/Tokyo');
 
 if (! isset($_POST['access_token'])) {
-    http_response_code(400);
+    header('HTTP/1.1 400 Bad Request');
+    header('Content-type: application/json');
     echo json_encode([
         'message' => 'The access token is not specified.',
     ]);
 }
 
 if (getenv('ROKA_ACCESS_TOKEN') !== $_POST['access_token']) {
-    http_response_code(400);
+    header('HTTP/1.1 400 Bad Request');
+    header('Content-type: application/json');
     echo json_encode([
         'message' => 'The access token is incorrect.',
     ]);
@@ -73,7 +75,8 @@ if (! empty($data)) {
     $client->send($text);
 }
 
-http_response_code(200);
+header('HTTP/1.1 200 OK');
+header('Content-type: application/json');
 echo json_encode([
     'message' => 'It was notified successfully.',
 ]);
